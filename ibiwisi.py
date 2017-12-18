@@ -1,16 +1,18 @@
 #!/usr/local/bin/python3
 
 import argparse
-import capture
-import mouse
-import window
-
-import os
-import time
+import socket
 import sys
 
 from master import Master
 from slave import Slave
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    ip = s.getsockname()[0]
+    s.close()
+    return ip
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
@@ -26,15 +28,17 @@ if __name__ == '__main__':
         print('wrong args')
 
     if args.master:
-        print(f'starting master on port {args.port}')
+        print(f'starting master on {get_ip()}:{args.port}')
         master = Master(args.port)
         master.set_size(864, 540)
-        master.set_slave(('localhost', int(input('slave port? '))))
+        addr, port = input('slave port? ').split(':')
+        master.set_slave((addr, int(port)))
         master.run()
 
     if args.slave:
-        print(f'starting slave on port {args.port}')
+        print(f'starting slave on {get_ip()}:{args.port}')
         slave = Slave(args.port)
-        slave.set_master(('localhost', int(input('master port? '))))
+        addr, port = input('master port? ').split(':')
+        slave.set_master((addr, int(port)))
         slave.run()
 
