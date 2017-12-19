@@ -11,6 +11,13 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 
+class DummyReader:
+    def __init__(self, data):
+        self.data = data
+
+    def read(self):
+        return self.data
+
 class Master:
     def __init__(self, port):
         self.connection = Connection(port)
@@ -33,10 +40,8 @@ class Master:
         print('fps:', 1 / (curr - self.last))
         self.last = curr
 
-        mssg = self.connection.recv()
-        with open('k.jpg', 'wb') as out:
-            out.write(mssg)
-        img = pyglet.sprite.Sprite(img=pyglet.image.load('k.jpg'))
+        reader = DummyReader(self.connection.recv())
+        img = pyglet.sprite.Sprite(img=pyglet.image.load('dummy.jpg', file=reader))
         img.scale = self.width / img.width
         img.draw()
         self.connection.send('ready')
