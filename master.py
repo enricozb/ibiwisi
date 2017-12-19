@@ -41,7 +41,6 @@ class Master:
         img.draw()
         self.connection.send('ready')
 
-
     def on_mouse_motion(self, x, y, dx, dy):
         return
         window_x, window_y = self.window.get_location()

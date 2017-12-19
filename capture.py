@@ -1,10 +1,25 @@
-import Quartz
 import LaunchServices
+import numpy as np
+import Quartz
 import Quartz.CoreGraphics as CG
 
 from Cocoa import NSURL
+from PIL import Image
 
-import time
+class DummyWriter:
+    name = 'dummy.jpeg'
+    bytes_arr = []
+
+    def write(content):
+        DummyWriter.bytes_arr.append(content)
+
+    def flush():
+        pass
+
+    def get_bytes():
+        data = b''.join(DummyWriter.bytes_arr)
+        DummyWriter.bytes_arr = []
+        return data
 
 def resize(image, w, h):
     context = CG.CGBitmapContextCreate(
@@ -19,11 +34,14 @@ def resize(image, w, h):
     CG.CGContextDrawImage(context, CG.CGContextGetClipBoundingBox(context), image);
     return CG.CGBitmapContextCreateImage(context);
 
-def capture(path):
-    _, displays, count = CG.CGGetActiveDisplayList(1, None, None)
+from time import time
 
+_, displays, count = CG.CGGetActiveDisplayList(1, None, None)
+
+def get_bytes_quartz(image):
+    s = time()
     dpi = 72 # FIXME: Should query this from somewhere, e.g for retina displays
-    url = NSURL.fileURLWithPath_(path)
+    url = NSURL.fileURLWithPath_('capture.jpg')
 
     dest = Quartz.CGImageDestinationCreateWithURL(
         url,
@@ -37,14 +55,43 @@ def capture(path):
         Quartz.kCGImagePropertyDPIHeight: dpi,
     }
 
-    # Add the image to the destination, characterizing the image with
-    # the properties dictionary.
-    image = CG.CGDisplayCreateImage(displays[0])
-
-    image = resize(image, 1200, 750)    
-
     Quartz.CGImageDestinationAddImage(dest, image, properties)
-
-    # When all the images (only 1 in this example) are added to the destination, 
-    # finalize the CGImageDestination object. 
     Quartz.CGImageDestinationFinalize(dest)
+
+    data = open('capture.jpg', 'rb').read()
+    print(f'Time to get data (Quartz): {time() - s}')
+    return data
+
+def get_bytes_pil(image):
+    # Grab raw pixel data (remove alpha channel)
+    width = CG.CGImageGetWidth(image)
+    height = CG.CGImageGetHeight(image)
+    bytesperrow = CG.CGImageGetBytesPerRow(image)
+    pixeldata = CG.CGDataProviderCopyData(CG.CGImageGetDataProvider(image))
+    image = np.frombuffer(pixeldata, dtype=np.uint8)
+    image = image.reshape((height, bytesperrow//4, 4))
+    image = image[:,:width,1:]
+
+    # Use PIL & DummyWriter to get byte data
+    s = time()
+    image = Image.fromarray(image)
+    print(f'Time to fromarray (PIL):   {time() - s}')
+
+    s = time()
+    image.save(DummyWriter)
+    print(f'Time to image.save (PIL):  {time() - s}')
+
+    s = time()
+    data = DummyWriter.get_bytes()
+    print(f'Time t0 get_bytes (PIL):   {time() - s}')
+    return data
+
+def capture():
+    s = time()
+    # Capture and resize
+    image = CG.CGDisplayCreateImage(displays[0])
+    image = resize(image, 1200, 750)    
+    print(f'Time to capture:           {time() - s}')
+
+    return get_bytes_quartz(image)
+ 

