@@ -6,6 +6,19 @@ from Cocoa import NSURL
 
 import time
 
+def resize(image, w, h):
+    context = CG.CGBitmapContextCreate(
+            None, w, h,
+            CG.CGImageGetBitsPerComponent(image),
+            CG.CGImageGetBytesPerRow(image) // CG.CGImageGetWidth(image) * w,
+            CG.CGImageGetColorSpace(image),
+            CG.CGImageGetAlphaInfo(image))
+
+    CG.CGContextSetInterpolationQuality(context, CG.kCGInterpolationHigh)
+
+    CG.CGContextDrawImage(context, CG.CGContextGetClipBoundingBox(context), image);
+    return CG.CGBitmapContextCreateImage(context);
+
 def capture(path):
     _, displays, count = CG.CGGetActiveDisplayList(1, None, None)
 
@@ -27,6 +40,8 @@ def capture(path):
     # Add the image to the destination, characterizing the image with
     # the properties dictionary.
     image = CG.CGDisplayCreateImage(displays[0])
+
+    image = resize(image, 1200, 750)    
 
     Quartz.CGImageDestinationAddImage(dest, image, properties)
 

@@ -10,41 +10,41 @@ class Connection:
 
         print(f'listening on port {port}')
         self.sock_recv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock_recv.bind(('localhost', self.port))
+        self.sock_recv.bind(('', self.port))
         self.sock_recv.listen(200)
 
         self.client_sock = None
 
     def set_sink(self, addr):
-        self.sock_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        for i in range(5):
+        print(f"Attempting to connect :{self.port} to {addr}")
+        while True:
             try:
+                self.sock_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.sock_send.connect(addr)
+                print("SUCCESS")
                 return
             except:
+                print(".", end="", flush=True)
+                self.sock_send.close()
                 time.sleep(1)
-                print(f"Failed to connect to sink {addr}, {4 - i} tries left")
-        else:
-            raise Exception(f"Failed to connect to sink {addr}")
 
     def send(self, mssg):
         if type(mssg) is str:
             mssg = bytes(mssg, 'utf-8')
 
-        print(f'sending message of size {len(mssg)} bytes')
         header = bytes(f'{len(mssg):016d}', 'utf-8')
-        self.sock_send.send(header + mssg)
+        self.sock_send.sendall(header + mssg)
 
     def recv(self):
-        print('listening...')
         if self.client_sock is None:
             self.client_sock, _ = self.sock_recv.accept() 
         size = int(self.client_sock.recv(16))
-        print(f'recieving message of size {size}')
         
         chunks = []
         while size > 0:
-            chunks.append(self.client_sock.recv(min(size, self.message_length)))
-            size -= self.message_length
+            chunk_len = min(size, self.message_length)
+            mssg = self.client_sock.recv(chunk_len)
+            chunks.append(mssg)
+            size -= len(mssg)
 
         return b''.join(chunks)

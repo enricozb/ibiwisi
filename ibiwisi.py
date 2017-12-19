@@ -30,7 +30,7 @@ if __name__ == '__main__':
     if args.master:
         print(f'starting master on {get_ip()}:{args.port}')
         master = Master(args.port)
-        master.set_size(864, 540)
+        master.set_size(1200, 750)
         addr, port = input('slave port? ').split(':')
         master.set_slave((addr, int(port)))
         master.run()
