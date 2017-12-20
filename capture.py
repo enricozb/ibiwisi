@@ -1,3 +1,4 @@
+import builtins
 import LaunchServices
 import numpy as np
 import Quartz
@@ -5,6 +6,12 @@ import Quartz.CoreGraphics as CG
 
 from Cocoa import NSURL
 from PIL import Image
+
+debug = False
+
+def print(*args, **kwargs):
+    if debug:
+        builtins.print(*args, **kwargs)
 
 class DummyWriter:
     name = 'dummy.jpeg'

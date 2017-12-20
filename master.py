@@ -61,9 +61,9 @@ class Master:
         pass
 
     def run(self):
-        # self.window.event(self.on_mouse_motion)
-        # self.window.event(self.on_mouse_drag)
-        # self.window.event(self.on_mouse_press)
-        # self.window.event(self.on_mouse_release)
+        self.window.event(self.on_mouse_motion)
+        self.window.event(self.on_mouse_drag)
+        self.window.event(self.on_mouse_press)
+        self.window.event(self.on_mouse_release)
         pyglet.clock.schedule_interval(self.on_draw, 1/120.0)
         pyglet.app.run()
